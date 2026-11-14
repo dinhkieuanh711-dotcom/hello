@@ -1,0 +1,204 @@
+<title>Fashion Video Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* layout: top stats strip, blocked-actions rail, queue of today's ideas as cards */
+  :root{
+    --bg:#0b0a08; --surface:#161209; --surface-2:#1f1a10; --border:#2c2514;
+    --text:#f1ece0; --text-muted:#9c9384; --gold:#c9a44c; --gold-soft:#e9d8a6;
+    --ok:#6fae7a; --warn:#d98c3f; --danger:#c0564f;
+    --font-display:'Fraunces',Georgia,serif; --font-body:'Inter',system-ui,sans-serif;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--font-body);
+    padding-left:max(16px, env(safe-area-inset-left,0px));
+    padding-right:max(16px, env(safe-area-inset-right,0px));
+    padding-block:28px 48px;
+  }
+  .wrap{max-width:980px; margin:0 auto; display:flex; flex-direction:column; gap:28px}
+  h1{font-family:var(--font-display); font-weight:600; font-size:clamp(1.6rem,4vw,2.2rem); margin:0; text-wrap:balance; color:var(--gold-soft)}
+  .eyebrow{font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--text-muted); margin:0 0 6px}
+  .header{border-bottom:1px solid var(--border); padding-bottom:20px}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px}
+  .stat{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; min-width:0}
+  .stat .n{font-family:var(--font-display); font-size:1.8rem; font-variant-numeric:tabular-nums; color:var(--gold)}
+  .stat .l{font-size:.78rem; color:var(--text-muted)}
+  section h2{font-family:var(--font-display); font-size:1.1rem; font-weight:600; margin:0 0 12px; color:var(--text)}
+  .blocked{display:flex; flex-direction:column; gap:8px}
+  .blocked-item{display:flex; gap:10px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--warn); border-radius:8px; padding:10px 14px; font-size:.88rem; color:var(--text-muted)}
+  .blocked-item b{color:var(--text); font-weight:600}
+  .queue{display:flex; flex-direction:column; gap:10px}
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; display:flex; gap:16px; flex-wrap:wrap; align-items:center}
+  .card .main{flex:1 1 320px; min-width:0}
+  .card .title{font-weight:600; margin:0 0 4px}
+  .card .hook{color:var(--text-muted); font-size:.88rem; margin:0 0 6px}
+  .tags{display:flex; gap:6px; flex-wrap:wrap}
+  .tag{font-size:.72rem; padding:2px 8px; border-radius:99px; border:1px solid var(--border); color:var(--text-muted)}
+  .tag.example{color:var(--warn); border-color:var(--warn)}
+  .score{text-align:center; min-width:56px}
+  .score .v{font-family:var(--font-display); font-size:1.5rem; font-variant-numeric:tabular-nums; color:var(--gold)}
+  .score .l{font-size:.68rem; color:var(--text-muted)}
+  .pill{font-size:.72rem; padding:4px 10px; border-radius:99px; font-weight:600; white-space:nowrap}
+  .pill.proposed{background:#2c2514; color:var(--warn)}
+  .pill.approved{background:#1d2e1f; color:var(--ok)}
+  .pill.rejected{background:#2e1d1b; color:var(--danger)}
+  .pill.scripted{background:#1d2530; color:#7fa9d9}
+  .actions{display:flex; gap:6px}
+  button{font-family:var(--font-body); font-size:.8rem; padding:6px 12px; border-radius:7px; border:1px solid var(--border); background:var(--surface-2); color:var(--text); cursor:pointer}
+  button:hover{border-color:var(--gold)}
+  button.primary{background:var(--gold); color:#1a1400; border-color:var(--gold); font-weight:600}
+  footer{font-size:.78rem; color:var(--text-muted); border-top:1px solid var(--border); padding-top:16px}
+  footer code{background:var(--surface); padding:1px 5px; border-radius:4px}
+  .empty{color:var(--text-muted); font-size:.9rem; padding:20px; text-align:center; border:1px dashed var(--border); border-radius:10px}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Inter:wght@400;500;600&display=swap">
+
+<div class="wrap">
+  <div class="header">
+    <p class="eyebrow" id="today-label">Hôm nay</p>
+    <h1>Fashion Video Pipeline</h1>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="n">–</div><div class="l">Tin đã quét</div></div>
+    <div class="stat"><div class="n">–</div><div class="l">Ý tưởng đề xuất</div></div>
+    <div class="stat"><div class="n">–</div><div class="l">Đã duyệt</div></div>
+    <div class="stat"><div class="n">–</div><div class="l">Đang chờ kết nối API</div></div>
+  </div>
+
+  <section>
+    <h2>Việc đang bị chặn</h2>
+    <div class="blocked" id="blocked"></div>
+  </section>
+
+  <section>
+    <h2>Hàng đợi ý tưởng hôm nay</h2>
+    <div class="queue" id="queue"><div class="empty">Đang tải…</div></div>
+  </section>
+
+  <footer>
+    Dữ liệu thật sẽ thay thế các dòng mẫu (gắn nhãn <em>VÍ DỤ</em>) một khi
+    <code>fashion-news-scanner</code> → <code>daily-content-proposer</code> →
+    <code>content-scorer</code> chạy hàng ngày và các API giọng nói/video đã
+    được kết nối. Duyệt (✓) / Từ chối (✕) ở đây sẽ cập nhật trạng thái thật
+    cho <code>video-script-production</code> đọc tiếp.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var todayLabel = document.getElementById('today-label');
+  var d = new Date();
+  todayLabel.textContent = 'Hôm nay · ' + d.toLocaleDateString('vi-VN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  var FALLBACK_IDEAS = [
+    {id:'idea-01', title:'Áo khoác da burgundy — reveal mã SAMMI 35930', hook:'Chiếc áo khoác da khiến cả tủ đồ phải nhường chỗ.', angle:'reveal', score:88, status:'approved', example:true},
+    {id:'idea-02', title:'Phối áo da với kính mát + giày mũi nhọn', hook:'3 món, 1 set đồ không thể sai.', angle:'phối đồ', score:81, status:'proposed', example:true},
+    {id:'idea-03', title:'Cận cảnh đường may & khuy vàng', hook:'Nhìn kỹ vào chi tiết làm nên giá trị.', angle:'reveal chi tiết', score:76, status:'proposed', example:true},
+    {id:'idea-04', title:'So sánh giá: hàng hiệu vs. phối cùng tông', hook:'Không cần đổi cả tủ đồ để trông sang hơn.', angle:'so sánh giá', score:72, status:'proposed', example:true},
+    {id:'idea-05', title:'Try-on 360° áo khoác da', hook:'Một vòng xoay, một quyết định mua.', angle:'try-on', score:84, status:'scripted', example:true},
+    {id:'idea-06', title:'Mùa đông này mặc gì với áo da?', hook:'Trời lạnh nhưng outfit thì không được nguội.', angle:'storytelling', score:68, status:'proposed', example:true},
+    {id:'idea-07', title:'Unbox túi giấy thương hiệu + sản phẩm', hook:'Mở hộp là bước đầu của trải nghiệm.', angle:'reveal', score:65, status:'proposed', example:true},
+    {id:'idea-08', title:'Behind the rack: chọn áo da thế nào cho chuẩn dáng', hook:'3 lỗi ai cũng mắc khi chọn áo da.', angle:'storytelling', score:70, status:'proposed', example:true},
+    {id:'idea-09', title:'Phối áo da đi làm vs đi chơi tối', hook:'1 áo, 2 phong cách, 0 lăn tăn.', angle:'phối đồ', score:74, status:'proposed', example:true},
+    {id:'idea-10', title:'Giá trị thật nằm ở chất liệu, không phải logo', hook:'Logo mờ dần, chất liệu còn mãi.', angle:'so sánh giá', score:58, status:'rejected', example:true}
+  ];
+  var FALLBACK_META = {
+    news_scanned: 0, proposed: 10, approved: 1, blocked_count: 3,
+    blocked: [
+      {label:'Facebook Page Access Token', detail:'Bước đăng bài & quét chỉ số (Insights) đang tạm dừng — cần token từ Meta for Developers.'},
+      {label:'Engine TTS/video-gen', detail:'Kịch bản sản xuất đã sẵn sàng (video-script-production) nhưng chưa render ra file thật — chưa chọn engine.'},
+      {label:'Kho ảnh sản phẩm', detail:'Hiện chỉ có 1 ảnh sản phẩm thật (áo khoác da burgundy) — cần thêm ảnh để đề xuất đủ 10 ý tưởng mỗi ngày từ dữ liệu thật.'}
+    ]
+  };
+
+  function renderStats(meta){
+    var el = document.getElementById('stats');
+    var items = [
+      [meta.news_scanned, 'Tin đã quét'],
+      [meta.proposed, 'Ý tưởng đề xuất'],
+      [meta.approved, 'Đã duyệt'],
+      [meta.blocked_count, 'Đang chờ kết nối API']
+    ];
+    el.innerHTML = items.map(function(it){
+      return '<div class="stat"><div class="n">'+it[0]+'</div><div class="l">'+it[1]+'</div></div>';
+    }).join('');
+  }
+
+  function renderBlocked(list){
+    var el = document.getElementById('blocked');
+    if(!list || !list.length){ el.innerHTML = '<div class="empty">Không có việc nào đang bị chặn.</div>'; return; }
+    el.innerHTML = list.map(function(b){
+      return '<div class="blocked-item"><span>⚠</span><div><b>'+b.label+'</b><br>'+b.detail+'</div></div>';
+    }).join('');
+  }
+
+  function renderQueue(ideas, writable){
+    var el = document.getElementById('queue');
+    if(!ideas || !ideas.length){ el.innerHTML = '<div class="empty">Chưa có ý tưởng nào hôm nay.</div>'; return; }
+    el.innerHTML = ideas.map(function(idea){
+      var actions = writable ? (
+        '<div class="actions">'+
+        '<button data-act="approve" data-id="'+idea.id+'">✓ Duyệt</button>'+
+        '<button data-act="reject" data-id="'+idea.id+'">✕ Từ chối</button>'+
+        '</div>'
+      ) : '';
+      return (
+        '<div class="card">'+
+          '<div class="score"><div class="v">'+idea.score+'</div><div class="l">điểm</div></div>'+
+          '<div class="main">'+
+            '<p class="title">'+idea.title+'</p>'+
+            '<p class="hook">"'+idea.hook+'"</p>'+
+            '<div class="tags">'+
+              '<span class="tag">'+idea.angle+'</span>'+
+              (idea.example ? '<span class="tag example">VÍ DỤ</span>' : '')+
+            '</div>'+
+          '</div>'+
+          '<span class="pill '+idea.status+'">'+idea.status+'</span>'+
+          actions+
+        '</div>'
+      );
+    }).join('');
+
+    el.querySelectorAll('button[data-act]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-id');
+        var status = btn.getAttribute('data-act') === 'approve' ? 'approved' : 'rejected';
+        if(window.__db){
+          window.__db.doc('ideas/'+id).update({status: status}).catch(function(){});
+        } else {
+          var idea = FALLBACK_IDEAS.find(function(i){ return i.id === id; });
+          if(idea){ idea.status = status; renderQueue(FALLBACK_IDEAS, false); }
+        }
+      });
+    });
+  }
+
+  renderStats(FALLBACK_META);
+  renderBlocked(FALLBACK_META.blocked);
+  renderQueue(FALLBACK_IDEAS, false);
+
+  (async function(){
+    try{
+      if(!window.claude || !window.claude.use) return;
+      var db = await window.claude.use('db');
+      if(!db) return;
+      window.__db = db;
+      var loaded = false;
+      var timer = setTimeout(function(){ if(!loaded){ /* keep fallback shown */ } }, 10000);
+
+      db.collection('ideas').onSnapshot(function(docs){
+        loaded = true; clearTimeout(timer);
+        var list = docs.map(function(doc){ return Object.assign({id: doc.id}, doc.data); })
+          .sort(function(a,b){ return (b.score||0) - (a.score||0); });
+        renderQueue(list.length ? list : FALLBACK_IDEAS, list.length > 0);
+      });
+
+      db.doc('meta/today').onSnapshot(function(doc){
+        if(doc && doc.data){ renderStats(doc.data); renderBlocked(doc.data.blocked); }
+      });
+    }catch(e){ /* keep fallback render */ }
+  })();
+})();
+</script>
