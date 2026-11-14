@@ -39,6 +39,34 @@ của GitHub chứ không phải trong phiên Claude Code). Cần:
 Việc này cần bạn xác nhận trước khi làm (tốn API quota thật, chạy không
 giám sát hàng ngày) — xem câu hỏi cuối cùng ở hội thoại.
 
+### Đã dựng: `.github/workflows/daily-content-pipeline.yml`
+
+Chạy thật trên GitHub, 09:00 giờ VN mỗi ngày (hoặc bấm chạy tay qua tab
+Actions). Script: `agent/scripts/daily_pipeline.py`. Để chạy được, vào
+**Settings → Secrets and variables → Actions** của repo, thêm các secret
+sau (Claude không thể tự thêm secret thay bạn — đây là thao tác chỉ chủ
+repo làm được):
+
+| Secret | Bắt buộc? | Dùng để |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | **Bắt buộc** | Viết bài + tự phản biện + chấm điểm. Không có thì pipeline dừng ngay, không chạy gì. |
+| `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` | Tuỳ chọn | Tạo giọng đọc thật. Thiếu thì bỏ qua bước này, báo rõ trong report. |
+| `RUNWAY_API_KEY` | Tuỳ chọn | Hiện mới dừng ở mức đọc được key — phần gọi API video-gen thật **chưa viết**, vì cần xác nhận lại format request hiện tại của Runway trước (xem ghi chú trong script). |
+| `FB_PAGE_ID` + `FB_PAGE_ACCESS_TOKEN` | Tuỳ chọn | Đăng bài lên Facebook Page. Thiếu thì bỏ qua, báo rõ trong report. |
+| `SEO_API_KEY` | Tuỳ chọn | Quét thứ hạng từ khoá — hiện mới đọc key, chưa gọi API thật (cần chọn provider cụ thể trước). |
+
+Mỗi lần chạy, pipeline ghi kết quả vào `agent/data/articles_<ngày>.json`
+và báo cáo vào `agent/data/reports/<ngày>.md`, rồi tự commit lại vào
+repo — bạn xem trực tiếp trong repo hoặc tab Actions, không cần mở lại
+chat này.
+
+**Vẫn thiếu để "100% không cần bạn"**: TTS và Facebook posting đã viết
+code thật (best-effort theo cấu trúc API đã biết — nên kiểm tra lần chạy
+đầu để chắc chắn đúng), còn Runway/Kling/Luma (render video) và quét
+thứ hạng từ khoá (SEO) mới dừng ở khung sườn, chưa có lệnh gọi API thật
+— sẽ hoàn thiện ngay khi bạn chọn xong provider cụ thể và xác nhận
+format request hiện tại của provider đó.
+
 ## Vì sao bước 4 (upload Facebook) và 5 (quét chỉ số) chưa tự động được
 
 - Session này chạy trong sandbox cloud, không resolve được

@@ -1,0 +1,40 @@
+name: Daily content pipeline
+
+on:
+  schedule:
+    # 02:00 UTC = 09:00 giờ Việt Nam
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run daily pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          RUNWAY_API_KEY: ${{ secrets.RUNWAY_API_KEY }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_ACCESS_TOKEN: ${{ secrets.FB_PAGE_ACCESS_TOKEN }}
+          SEO_API_KEY: ${{ secrets.SEO_API_KEY }}
+          SCORE_THRESHOLD: "95"
+        run: python agent/scripts/daily_pipeline.py
+
+      - name: Commit results back to repo
+        run: |
+          git config user.name "daily-content-pipeline"
+          git config user.email "actions@users.noreply.github.com"
+          git add agent/data || true
+          git diff --cached --quiet || git commit -m "Daily pipeline run $(date -u +%Y-%m-%d)"
+          git push || true
