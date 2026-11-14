@@ -1,0 +1,14 @@
+{
+  "provider": "search_console",
+  "search_console": {
+    "site_url": "PASTE_VERIFIED_SITE_URL_HERE",
+    "oauth_client_id": "PASTE_HERE",
+    "oauth_client_secret": "PASTE_HERE",
+    "oauth_refresh_token": "PASTE_HERE"
+  },
+  "rank_api": {
+    "provider": "serpapi_or_ahrefs_or_semrush",
+    "api_key": "PASTE_HERE"
+  },
+  "note": "Điền 1 trong 2 khối (search_console HOẶC rank_api), không cần cả hai. search_console miễn phí nhưng cần site đã verify quyền sở hữu trên Google Search Console."
+}

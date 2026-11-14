@@ -14,6 +14,30 @@ Agent gồm 6 bước, map với yêu cầu gốc. Mỗi bước là 1 skill tro
 | 6 | Đề xuất repo/tool | README này | ✅ xem danh sách bên dưới |
 | 7 | Giao diện quản lý | `agent/dashboard/` (Artifact) | ✅ đã có bản đầu |
 | 8 | Báo cáo hàng ngày | `daily-agent-report` | ✅ chạy được ngay |
+| 9 | Tự viết ≥5 bài/ngày + tự phản biện + tự chấm điểm | `daily-article-writer` + `self-critique-score-loop` | ✅ chạy được ngay (ngưỡng đăng mặc định 95/100) |
+| 10 | Quét thứ hạng từ khoá + tự đề xuất bài mới | `keyword-rank-feedback` | ⚠️ cần Google Search Console hoặc 1 API rank-tracking (xem `agent/config/seo.json.example`) |
+| 11 | Chạy 100% tự động hàng ngày, không cần mở chat | — | ⚠️ xem mục "Tự động hoá thật" bên dưới — quan trọng, đọc trước khi cho rằng việc này đã xong |
+
+## Tự động hoá thật — giới hạn của CronCreate trong phiên chat này
+
+`CronCreate` (công cụ đặt lịch có sẵn trong Claude Code) **chỉ sống
+trong phiên chat này**: không ghi ra đĩa, tự hết hạn sau 7 ngày, và chỉ
+chạy khi phiên chat này còn đang mở. Môi trường chạy Claude Code cũng bị
+thu hồi khi không hoạt động. Nói cách khác: nếu chỉ dùng `CronCreate`,
+hệ thống **sẽ không** thực sự "tự chạy mãi mãi không cần bạn" — nó âm
+thầm dừng sau vài ngày hoặc khi phiên đóng, và bạn sẽ không được báo.
+
+Cách duy nhất để có lịch chạy hàng ngày thật sự độc lập với phiên chat
+này: **GitHub Actions** (lịch cron thật trên GitHub, chạy trên server
+của GitHub chứ không phải trong phiên Claude Code). Cần:
+- 1 Anthropic API key riêng (khác tài khoản Claude Code đang dùng),
+  thêm làm GitHub Actions secret (không dán vào chat).
+- 1 workflow `.github/workflows/daily-pipeline.yml` chạy script gọi API
+  đó để thực hiện từng bước (viết bài, phản biện, chấm điểm...) và ghi
+  kết quả/báo cáo vào repo hoặc gửi thông báo.
+
+Việc này cần bạn xác nhận trước khi làm (tốn API quota thật, chạy không
+giám sát hàng ngày) — xem câu hỏi cuối cùng ở hội thoại.
 
 ## Vì sao bước 4 (upload Facebook) và 5 (quét chỉ số) chưa tự động được
 
