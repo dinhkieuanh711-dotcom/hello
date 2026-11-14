@@ -44,6 +44,46 @@ Agent gồm 6 bước, map với yêu cầu gốc. Mỗi bước là 1 skill tro
 **Chưa tự cài** các repo trên vì đều là dịch vụ trả phí/cần API key hoặc
 GPU riêng — cần bạn chọn trước (xem câu hỏi cuối hội thoại).
 
+## Lựa chọn đã chốt: full automation
+
+Bạn đã chọn: **giọng AI chung (ElevenLabs/OpenAI TTS)** + **video API trả
+phí (Runway/Kling/Luma)** + **Facebook Graph API**. Cả 3 đều cần bạn tự
+đăng ký/tạo credential — Claude không thể tạo tài khoản, thanh toán, hay
+xin quyền ứng dụng thay bạn. Sau khi bạn điền vào các file dưới, nói với
+agent để nối phần gọi API thật (hiện là template rỗng, không auto-chạy
+cho tới khi có key thật).
+
+### 1. ElevenLabs/OpenAI TTS
+- Đăng ký tài khoản, lấy API key trong phần cài đặt nhà cung cấp.
+- Chọn 1 giọng tiếng Việt có sẵn trên dashboard, copy `voice_id`.
+- Điền vào `agent/config/engines.json` (copy từ `engines.json.example`).
+
+### 2. Runway / Kling / Luma (video-gen)
+- Đăng ký tài khoản nhà cung cấp bạn chọn, mua credit, lấy API key.
+- Điền vào cùng file `agent/config/engines.json`, mục `video`.
+- Đặt `budget.daily_cap_usd` theo mức bạn chấp nhận chi mỗi ngày — pipeline
+  sẽ dừng render tự động nếu vượt mức, tránh chi phí ngoài kiểm soát khi
+  chạy 10 video/ngày không giám sát.
+
+### 3. Facebook Graph API
+- Tạo 1 Meta App tại Meta for Developers (loại "Business").
+- Thêm sản phẩm "Facebook Login" + xin quyền `pages_manage_posts`,
+  `pages_read_engagement`, `pages_show_list`.
+- Lấy Page Access Token, sau đó đổi sang **long-lived token** (không phải
+  loại hết hạn sau 1-2 giờ) — nếu không chắc cách đổi, nói với agent, sẽ
+  hướng dẫn cụ thể khi bạn có token ngắn hạn trong tay.
+- Điền `page_id`, `page_access_token`, `app_id`, `app_secret` vào
+  `agent/config/facebook.json` (copy từ `facebook.json.example`).
+- Hai file config thật (`engines.json`, `facebook.json`) đã được
+  `.gitignore` — sẽ không bị đẩy lên GitHub cùng mã nguồn.
+
+### An toàn khi chạy full automation
+Vì bạn chọn tự động hoàn toàn (không duyệt tay trước khi đăng), đề xuất
+giữ lại 1 lớp an toàn tối thiểu: ngưỡng điểm từ `content-scorer` (mặc
+định 60/100) vẫn chặn ý tưởng điểm thấp trước khi tới bước render/đăng,
+và `budget.daily_cap_usd` chặn chi phí vượt mức — cả hai đều có thể tắt
+nếu bạn muốn 100% không có lớp chặn nào.
+
 ## Tính năng đề xuất thêm (ngoài 8 ý của bạn)
 
 - Hàng đợi duyệt thủ công trước khi đăng (an toàn, tránh đăng nhầm)

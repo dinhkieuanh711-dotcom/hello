@@ -1,0 +1,7 @@
+{
+  "page_id": "PASTE_YOUR_PAGE_ID_HERE",
+  "page_access_token": "PASTE_LONG_LIVED_PAGE_TOKEN_HERE",
+  "app_id": "PASTE_META_APP_ID_HERE",
+  "app_secret": "PASTE_META_APP_SECRET_HERE",
+  "note": "page_access_token phải là LONG-LIVED token (không hết hạn sau 1-2h) — xem agent/README.md mục 'Facebook Graph API' để lấy đúng loại token."
+}

@@ -1,0 +1,17 @@
+{
+  "tts": {
+    "provider": "elevenlabs",
+    "api_key": "PASTE_YOUR_KEY_HERE",
+    "voice_id": "PASTE_VOICE_ID_HERE",
+    "note": "provider: 'elevenlabs' hoặc 'openai'. voice_id: giọng có sẵn trên dashboard nhà cung cấp, chọn giọng tiếng Việt nếu có."
+  },
+  "video": {
+    "provider": "runway",
+    "api_key": "PASTE_YOUR_KEY_HERE",
+    "note": "provider: 'runway', 'kling', hoặc 'luma'. Mỗi provider có format request khác nhau — pipeline sẽ map theo provider này."
+  },
+  "budget": {
+    "daily_cap_usd": 20,
+    "note": "Dừng tự động render khi vượt mức này trong ngày — tránh chi phí vượt kiểm soát khi chạy 10 video/ngày tự động."
+  }
+}
